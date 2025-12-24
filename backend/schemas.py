@@ -1,3 +1,4 @@
+# backend\schemas.py
 from datetime import datetime
 from typing import Optional
 import uuid
@@ -19,7 +20,7 @@ class TaskUpdate(BaseModel):
 
 class TaskRead(TaskBase):
     id: int
-    user_id: uuid.UUID
+    user_id: str
     created_at: datetime
     updated_at: datetime
 
@@ -28,11 +29,13 @@ class TaskRead(TaskBase):
 
 # User Schemas
 class UserRead(BaseModel):
-    id: uuid.UUID
+    id: str
     email: str
-    full_name: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    name: str
+    image: Optional[str] = None
+    emailVerified: bool
+    createdAt: datetime
+    updatedAt: datetime
 
     class Config:
         from_attributes = True

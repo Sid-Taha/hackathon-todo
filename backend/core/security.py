@@ -1,34 +1,39 @@
-import jwt
+# backend\core\security.py
+from datetime import datetime
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlmodel import Session
-import uuid
+from sqlmodel import Session as DBSession, select
 
-from backend.core.config import settings
 from backend.core.db import engine
-from backend.models import User
+from backend.models import User, Session as AuthSession
 
 reusable_oauth2 = HTTPBearer()
 
 def get_current_user(token: HTTPAuthorizationCredentials = Depends(reusable_oauth2)) -> User:
-    try:
-        payload = jwt.decode(
-            token.credentials, settings.BETTER_AUTH_SECRET, algorithms=[settings.ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
-        if user_id is None:
+    with DBSession(engine) as session:
+        # Look up the token in the AuthSession table
+        statement = select(AuthSession).where(AuthSession.token == token.credentials)
+        auth_session = session.exec(statement).first()
+        
+        # Validation: Check if session exists and is not expired
+        if not auth_session:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
+                detail="Invalid session token",
             )
-    except (jwt.PyJWTError, ValueError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-        )
-    
-    with Session(engine) as session:
-        user = session.get(User, uuid.UUID(user_id))
+        
+        if auth_session.expiresAt < datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session expired",
+            )
+        
+        # Fetch the associated User
+        user = session.get(User, auth_session.userId)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+            
         return user

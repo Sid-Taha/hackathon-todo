@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
-import uuid
 from sqlmodel import Field, Relationship, SQLModel, Column, DateTime, func
 
 if TYPE_CHECKING:
@@ -11,7 +10,7 @@ class Task(SQLModel, table=True):
     title: str
     description: Optional[str] = None
     status: str = Field(default="pending")
-    user_id: uuid.UUID = Field(foreign_key="user.id")
+    user_id: str = Field(foreign_key="user.id")
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         sa_column=Column(DateTime(timezone=True), server_default=func.now())
