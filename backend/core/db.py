@@ -1,7 +1,12 @@
+# backend\core\db.py
 from sqlmodel import create_engine, Session, SQLModel
 from backend.core.config import settings
 
-engine = create_engine(settings.DATABASE_URL, echo=True)
+engine = create_engine(
+    str(settings.DATABASE_URL),
+    echo=False,  # ya True
+    pool_pre_ping=True  # <--- YE LINE ZAROORI HAI
+)
 
 def get_session():
     with Session(engine) as session:
