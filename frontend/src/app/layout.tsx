@@ -1,3 +1,4 @@
+// frontend\src\app\layout.tsx
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
@@ -30,6 +31,8 @@ export const metadata: Metadata = {
   },
 }
 
+import ChatWidget from "@/components/ChatWidget"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,6 +42,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans antialiased`}>
         {children}
+        <ChatWidget />
         <Analytics />
       </body>
     </html>

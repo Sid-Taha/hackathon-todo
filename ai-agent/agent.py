@@ -15,7 +15,7 @@ server_params = {
     "env": os.environ.copy()
 }
 
-mcp_server = MCPServerStdio(server_params)
+mcp_server = MCPServerStdio(server_params, client_session_timeout_seconds=30)
 
 def create_todo_agent():
     return Agent(
