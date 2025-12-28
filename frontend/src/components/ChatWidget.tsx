@@ -1,9 +1,9 @@
-// frontend\src\components\ChatWidget.tsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, Bot, User } from 'lucide-react';
 import { useSession } from "@/lib/auth-client";
+import { useTasks } from "@/context/TaskContext";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -18,6 +18,7 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { data: session } = useSession();
+  const { refreshTasks } = useTasks();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,7 +26,7 @@ export default function ChatWidget() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isOpen]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +54,7 @@ export default function ChatWidget() {
       const data = await response.json();
       const assistantMessage: Message = { role: 'assistant', content: data.response };
       setMessages(prev => [...prev, assistantMessage]);
+      await refreshTasks(); 
     } catch (error) {
       console.error('Chat Error:', error);
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please make sure the AI Agent is running.' }]);
@@ -61,77 +63,128 @@ export default function ChatWidget() {
     }
   };
 
+  if (!session) return null; // Hide if not logged in
+
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-6 right-6 z-50">
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all transform hover:scale-105"
+        className={`p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95 ${
+          isOpen 
+            ? 'bg-destructive text-destructive-foreground rotate-90' 
+            : 'bg-primary text-primary-foreground'
+        }`}
       >
         {isOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-80 sm:w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+        <div className="absolute bottom-20 right-0 w-[350px] sm:w-[400px] h-[550px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in-20 duration-300">
+          
           {/* Header */}
-          <div className="bg-blue-600 p-4 text-white flex justify-between items-center">
+          <div className="bg-primary p-4 flex items-center gap-3 shadow-md">
+            <div className="bg-primary-foreground/20 p-2 rounded-lg">
+                <Bot className="w-6 h-6 text-primary-foreground" />
+            </div>
             <div>
-              <h3 className="font-bold">Todo Assistant</h3>
-              <p className="text-xs text-blue-100">AI-powered task management</p>
+              <h3 className="font-bold text-primary-foreground text-lg">Todo AI</h3>
+              <p className="text-xs text-primary-foreground/80 flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                Online & Ready
+              </p>
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background/50 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
             {messages.length === 0 && (
-              <div className="text-center text-gray-500 mt-10">
-                <p>Hello! I can help you manage your tasks.</p>
-                <p className="text-sm">Try: "Add a task to buy groceries"</p>
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-70">
+                <div className="bg-muted p-4 rounded-full mb-4">
+                    <Bot className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground font-medium">Hello {session.user.name}!</p>
+                <p className="text-sm text-muted-foreground/80 mt-1">
+                  Tell me to create, update, or delete tasks for you.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                    <button 
+                        onClick={() => setInput("Add a task to check emails")}
+                        className="text-xs bg-muted hover:bg-muted/80 text-muted-foreground px-3 py-2 rounded-full border border-border transition-colors"
+                    >
+                        "Add a task to check emails"
+                    </button>
+                    <button 
+                         onClick={() => setInput("Show my pending tasks")}
+                         className="text-xs bg-muted hover:bg-muted/80 text-muted-foreground px-3 py-2 rounded-full border border-border transition-colors"
+                    >
+                        "Show my pending tasks"
+                    </button>
+                </div>
               </div>
             )}
+            
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
+                {m.role === 'assistant' && (
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1">
+                        <Bot className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                )}
+                
                 <div
-                  className={`max-w-[80%] p-3 rounded-2xl ${
+                  className={`max-w-[80%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
                     m.role === 'user'
-                      ? 'bg-blue-600 text-white rounded-tr-none'
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none shadow-sm'
+                      ? 'bg-primary text-primary-foreground rounded-tr-none'
+                      : 'bg-muted text-foreground border border-border rounded-tl-none'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                  <div className="whitespace-pre-wrap">{m.content}</div>
                 </div>
+
+                {m.role === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
+                        <User className="w-5 h-5 text-primary" />
+                    </div>
+                )}
               </div>
             ))}
+            
             {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm">
-                  <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+              <div className="flex gap-3 justify-start">
+                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <Bot className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="bg-muted border border-border p-4 rounded-2xl rounded-tl-none flex items-center gap-2">
+                  <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce"></div>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <form onSubmit={handleSend} className="p-4 bg-white border-t border-gray-100 flex gap-2">
+          {/* Input Area */}
+          <form onSubmit={handleSend} className="p-4 bg-card border-t border-border flex gap-3 items-center">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a message..."
+              placeholder="Type your command..."
               disabled={isLoading}
-              className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
+              className="flex-1 bg-muted/50 border border-border text-foreground rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-background transition-all placeholder:text-muted-foreground"
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl disabled:opacity-50 transition"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-xl disabled:opacity-50 disabled:hover:bg-primary transition-all shadow-lg shadow-primary/20"
             >
-              <Send className="w-5 h-5" />
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </button>
           </form>
         </div>

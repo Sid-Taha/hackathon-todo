@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn, signUp } from "@/lib/auth-client";
+import { Loader2, LogIn, UserPlus, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -55,67 +56,95 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="p-8 bg-white rounded shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          {isSignUp ? 'Create Account' : 'Sign In'}
-        </h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
+      <div className="w-full max-w-md space-y-8 bg-card p-8 rounded-2xl shadow-2xl border border-border">
+        
+        <div className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {isSignUp ? 'Enter your details to get started' : 'Sign in to access your dashboard'}
+          </p>
+        </div>
         
         {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">
-                {error}
+            <div className="flex items-center gap-2 bg-destructive/10 text-destructive p-3 rounded-lg text-sm border border-destructive/20">
+               <AlertCircle className="w-4 h-4" />
+               <span>{error}</span>
             </div>
         )}
 
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-6">
           {isSignUp && (
             <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">Full Name</label>
                 <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                placeholder="John Doe"
-                required={isSignUp}
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/50"
+                  placeholder="John Doe"
+                  required={isSignUp}
                 />
             </div>
           )}
+          
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/50"
               placeholder="you@example.com"
               required
             />
           </div>
+          
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/50"
               placeholder="••••••••"
               required
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-xl font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:hover:scale-100 flex items-center justify-center gap-2 shadow-lg shadow-primary/25"
           >
-            {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Processing...
+                </>
+            ) : (
+                isSignUp ? (
+                    <>
+                        <UserPlus className="w-5 h-5" /> Sign Up
+                    </>
+                ) : (
+                    <>
+                        <LogIn className="w-5 h-5" /> Sign In
+                    </>
+                )
+            )}
           </button>
         </form>
         
         <div className="mt-6 text-center">
             <button 
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-sm text-blue-600 hover:underline"
+                onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setError('');
+                }}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors hover:underline"
             >
                 {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
             </button>

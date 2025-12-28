@@ -1,37 +1,24 @@
-// frontend\src\app\layout.tsx
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
+import ChatWidget from "@/components/ChatWidget"
+import { TaskProvider } from "@/context/TaskContext" // 👈 New Import
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+})
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+})
 
 export const metadata: Metadata = {
-  title: "TaskFlow - Task Management Simplified",
-  description: "Organize your work, track your progress, and achieve more with our intuitive task management platform.",
-  generator: "v0.app",
-  icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
-  },
+  title: "TaskFlow",
+  description: "AI Powered Todo App",
 }
-
-import ChatWidget from "@/components/ChatWidget"
 
 export default function RootLayout({
   children,
@@ -40,10 +27,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
-        {children}
-        <ChatWidget />
-        <Analytics />
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {/* 👇 Context Provider Added */}
+        <TaskProvider>
+          {children}
+          <ChatWidget />
+        </TaskProvider>
       </body>
     </html>
   )
