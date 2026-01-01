@@ -1,12 +1,14 @@
 # mcp-server\main.py
 from mcp.server.fastmcp import FastMCP
 import httpx
+import os
 from typing import Optional, List, Dict, Any
 
 # Initialize FastMCP server
 mcp = FastMCP("TodoManager")
 
-BACKEND_URL = "http://localhost:8000/api/v1"
+BASE_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+BACKEND_URL = f"{BASE_URL}/api/v1"
 
 @mcp.tool()
 async def get_tasks(session_token: str) -> List[Dict[str, Any]]:
